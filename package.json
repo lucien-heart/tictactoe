@@ -1,0 +1,9 @@
+{
+  "name": "tictactoe",
+  "version": "1.0.0",
+  "description": "Tic-Tac-Toe with GitHub profile pics",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

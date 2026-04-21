@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tic-Tac-Toe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+    color: #e6edf3;
+    overflow: hidden;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .players {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  .player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .player.active {
+    border-color: #58a6ff;
+    background: rgba(88, 166, 255, 0.08);
+    box-shadow: 0 0 20px rgba(88, 166, 255, 0.15);
+  }
+
+  .player img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid #30363d;
+    transition: border-color 0.3s;
+  }
+
+  .player.active img {
+    border-color: #58a6ff;
+  }
+
+  .player .name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b949e;
+  }
+
+  .player.active .name {
+    color: #58a6ff;
+  }
+
+  .vs {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #484f58;
+  }
+
+  .score {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #e6edf3;
+  }
+
+  #status {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    min-height: 28px;
+    color: #8b949e;
+  }
+
+  #status.winner {
+    background: linear-gradient(90deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.3rem;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 6px;
+    background: #21262d;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .cell {
+    width: 120px;
+    height: 120px;
+    background: #0d1117;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cell:hover:not(.taken) {
+    background: #161b22;
+    transform: scale(1.03);
+  }
+
+  .cell:hover:not(.taken)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    border: 2px solid rgba(88, 166, 255, 0.3);
+  }
+
+  .cell img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.3) rotate(-180deg);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .cell img.show {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  .cell.win-cell {
+    background: rgba(88, 166, 255, 0.1);
+    box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+  }
+
+  .cell.win-cell img {
+    filter: drop-shadow(0 0 8px rgba(88, 166, 255, 0.6));
+  }
+
+  #restart {
+    margin-top: 24px;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3);
+  }
+
+  #restart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(35, 134, 54, 0.4);
+  }
+
+  .confetti {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: fall linear forwards;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Tic-Tac-Toe</h1>
+
+<div class="players">
+  <div class="player active" id="p1">
+    <img src="https://avatars.githubusercontent.com/u/88631572?v=4" alt="lucien-heart" />
+    <span class="name">@lucien-heart</span>
+    <span class="score" id="score1">0</span>
+  </div>
+  <span class="vs">VS</span>
+  <div class="player" id="p2">
+    <img src="https://avatars.githubusercontent.com/u/1399411?v=4" alt="cheeragpatel" />
+    <span class="name">@cheeragpatel</span>
+    <span class="score" id="score2">0</span>
+  </div>
+</div>
+
+<div id="status">@lucien-heart's turn</div>
+
+<div class="board" id="board"></div>
+
+<button id="restart">New Game</button>
+
+<script>
+const PLAYER_1 = {
+  name: "@lucien-heart",
+  img: "https://avatars.githubusercontent.com/u/88631572?v=4"
+};
+const PLAYER_2 = {
+  name: "@cheeragpatel",
+  img: "https://avatars.githubusercontent.com/u/1399411?v=4"
+};
+
+const WINS = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+let board = Array(9).fill(null);
+let currentPlayer = 1;
+let gameOver = false;
+let scores = { 1: 0, 2: 0 };
+
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const restartBtn = document.getElementById("restart");
+const p1El = document.getElementById("p1");
+const p2El = document.getElementById("p2");
+
+function createBoard() {
+  boardEl.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    cell.addEventListener("click", () => handleClick(i));
+    // Preload both images (hidden)
+    const img = document.createElement("img");
+    img.draggable = false;
+    cell.appendChild(img);
+    boardEl.appendChild(cell);
+  }
+}
+
+function handleClick(i) {
+  if (gameOver || board[i]) return;
+
+  const player = currentPlayer === 1 ? PLAYER_1 : PLAYER_2;
+  board[i] = currentPlayer;
+
+  const cell = boardEl.children[i];
+  cell.classList.add("taken");
+  const img = cell.querySelector("img");
+  img.src = player.img;
+  img.alt = player.name;
+  requestAnimationFrame(() => img.classList.add("show"));
+
+  const winCombo = checkWin(currentPlayer);
+  if (winCombo) {
+    gameOver = true;
+    statusEl.textContent = `${player.name} wins! 🎉`;
+    statusEl.className = "winner";
+    scores[currentPlayer]++;
+    document.getElementById("score1").textContent = scores[1];
+    document.getElementById("score2").textContent = scores[2];
+    winCombo.forEach(idx => boardEl.children[idx].classList.add("win-cell"));
+    launchConfetti();
+    return;
+  }
+
+  if (board.every(c => c !== null)) {
+    gameOver = true;
+    statusEl.textContent = "It's a draw! 🤝";
+    statusEl.className = "";
+    return;
+  }
+
+  currentPlayer = currentPlayer === 1 ? 2 : 1;
+  updateTurnUI();
+}
+
+function updateTurnUI() {
+  const player = currentPlayer === 1 ? PLAYER_1 : PLAYER_2;
+  statusEl.textContent = `${player.name}'s turn`;
+  statusEl.className = "";
+  p1El.classList.toggle("active", currentPlayer === 1);
+  p2El.classList.toggle("active", currentPlayer === 2);
+}
+
+function checkWin(p) {
+  for (const combo of WINS) {
+    if (combo.every(i => board[i] === p)) return combo;
+  }
+  return null;
+}
+
+function launchConfetti() {
+  const colors = ["#58a6ff", "#bc8cff", "#3fb950", "#f78166", "#d2a8ff", "#ff7b72"];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement("div");
+    el.className = "confetti";
+    el.style.left = Math.random() * 100 + "vw";
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (Math.random() * 1.5 + 1) + "s";
+    el.style.animationDelay = (Math.random() * 0.5) + "s";
+    el.style.width = (Math.random() * 8 + 6) + "px";
+    el.style.height = (Math.random() * 8 + 6) + "px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  }
+}
+
+restartBtn.addEventListener("click", () => {
+  board = Array(9).fill(null);
+  currentPlayer = 1;
+  gameOver = false;
+  updateTurnUI();
+  createBoard();
+});
+
+createBoard();
+</script>
+</body>
+</html>
